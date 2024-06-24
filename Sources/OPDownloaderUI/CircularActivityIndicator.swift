@@ -109,7 +109,6 @@ extension CircularActivityIndicator {
             Image(systemName: "checkmark")
                 .resizable()
                 .font(.headline)
-                .fontWeight(.heavy)
                 .foregroundStyle(Color.accentColor)
                 .frame(width: 12, height: 12)
         }

@@ -18,7 +18,7 @@ public struct DownloadingView: View {
     }
     
     public var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack {
                 if downloader.downloadingItems.isEmpty {
                     BlankView(title: "No Downloading Items",
