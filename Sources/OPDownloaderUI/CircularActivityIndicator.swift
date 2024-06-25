@@ -10,7 +10,7 @@ import OPDownloader
 
 public struct CircularActivityIndicator: View {
     
-    @StateObject private var downloader = OPDownloader()
+    @StateObject private var downloader: OPDownloader
     @State private var isLoading: Bool = false
     
     private let lineWidth: CGFloat = 3
@@ -18,7 +18,12 @@ public struct CircularActivityIndicator: View {
     private let lineColor: Color = .accentColor
     private let width: CGFloat = 28
     
-    public let url: URL
+    private let url: URL
+    
+    public init(downloader: OPDownloader, url: URL) {
+        self._downloader = StateObject(wrappedValue: downloader)
+        self.url = url
+    }
     
     public var body: some View {
         if let state = downloader.inProcessings[url] {
@@ -32,9 +37,9 @@ public struct CircularActivityIndicator: View {
                     pausedView(at: Double(progress))
                 case .canceled:
                     EmptyView()
-                case .finished(let outputURL):
+                case .finished(_):
                     downloadedView()
-                case .failed(let error):
+                case .failed(_):
                     failedView()
                 }
             }
@@ -151,8 +156,4 @@ extension CircularActivityIndicator {
                 .background(.regularMaterial, in: Capsule())
         }
     }
-}
-
-#Preview {
-    CircularActivityIndicator(url: URL(string: "https://dl33.genyoutube.online/mates/en/download?url=ZTREjvNyOeSdfB%2B/bca5SCD6n/tMnqd7fIwc2t0YROIcttg3G5u9GaUwJ/Nq5gj7LaXcPsZCGcwamTCUKp1BYPJt11rJQgQs5hCyhxvO3HcvoyFkn3M7EDPxbULmUgUPmnaon0AH7CakKOQ60vEiOlVI3ELTEvycyTes99vcZM4WfdiRTANFsZiO/WS5NqFxBPqCt5m2NeI%3D")!)
 }

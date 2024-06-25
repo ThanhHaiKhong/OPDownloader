@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import OPDownloader
 
 public struct DownloadItemView: View {
+    
+    @StateObject private var downloader: OPDownloader
     
     private let url: URL
     private let title: String
@@ -15,10 +18,11 @@ public struct DownloadItemView: View {
     
     public init(url: URL, 
                 title: String,
-                description: String? = nil) {
+                description: String? = nil, downloader: OPDownloader) {
         self.url = url
         self.title = title
         self.description = description
+        self._downloader = StateObject(wrappedValue: downloader)
     }
     
     public var body: some View {
@@ -49,7 +53,7 @@ public struct DownloadItemView: View {
             
             Spacer()
             
-            CircularActivityIndicator(url: url)
+            CircularActivityIndicator(downloader: downloader, url: url)
         }
     }
 }

@@ -31,7 +31,8 @@ public struct DownloadingView: View {
                             if let url = URL(string: item.fileURL) {
                                 DownloadItemView(url: url, 
                                                  title: item.fileName,
-                                                 description: item.fileURL)
+                                                 description: item.fileURL,
+                                                 downloader: downloader)
                                     .swipeActions {
                                         Button(role: .destructive) {
                                             downloader.perform(operation: .cancel, on: item)
