@@ -146,14 +146,18 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("Download started: \(String(describing: downloadModel.fileName))")
         #endif
-        stateChanged.send((downloadModel, .started))
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .started))
+        }
     }
     
     public func downloadRequestDidPopulatedInterruptedTasks(_ downloadModels: [MZDownloadModel]) {
         #if DEBUG
         print("Download interrupted tasks: \(downloadModels)")
         #endif
-        stateChanged.send((downloadModels.first, .interrupted))
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModels.first, .interrupted))
+        }
     }
     
     public func downloadRequestDidUpdateProgress(_ downloadModel: MZDownloadModel, index: Int) {
@@ -167,7 +171,9 @@ extension OPDownloader: MZDownloadManagerDelegate {
         print("Download paused: \(String(describing: downloadModel.fileName))")
         #endif
         
-        stateChanged.send((downloadModel, .paused(downloadModel.progress)))
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .paused(downloadModel.progress)))
+        }
         
         if let url = URL(string: downloadModel.fileURL) {
             inProcessings[url] = .paused(downloadModel.progress)
@@ -178,16 +184,18 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("Download resumed: \(String(describing: downloadModel.fileName))")
         #endif
-        stateChanged.send((downloadModel, .resumed))
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .resumed))
+        }
     }
     
     public func downloadRequestCanceled(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download canceled: \(String(describing: downloadModel.fileName))")
         #endif
-        
-        stateChanged.send((downloadModel, .canceled))
-        
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .canceled))
+        }
         if let url = URL(string: downloadModel.fileURL) {
             inProcessings[url] = .canceled
         }
@@ -200,7 +208,9 @@ extension OPDownloader: MZDownloadManagerDelegate {
         
         if let url = URL(string: downloadModel.destinationPath) {
             inProcessings[url] = .finished(url)
-            stateChanged.send((downloadModel, .finished(url)))
+            DispatchQueue.main.async {
+                self.stateChanged.send((downloadModel, .finished(url)))
+            }
         }
     }
     
@@ -208,9 +218,9 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("Download failed: \(String(describing: downloadModel.fileName)) - \(error.localizedDescription)")
         #endif
-        
-        stateChanged.send((downloadModel, .failed(error)))
-        
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .failed(error)))
+        }
         if let url = URL(string: downloadModel.fileURL) {
             inProcessings[url] = .failed(error)
         }
@@ -220,44 +230,54 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("Download destination does not exist: \(String(describing: downloadModel.fileName))")
         #endif
-        
-        stateChanged.send((downloadModel, .destinationDoestNotExists(location)))
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .destinationDoestNotExists(location)))
+        }
     }
     
     public func downloadRequestDidMoved(_ location: URL, downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download moved: \(String(describing: downloadModel.fileName))")
         #endif
-        
-        stateChanged.send((downloadModel, .didMoved))
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .didMoved))
+        }
     }
     
     public func downloadRequestDidDuplicateDownload(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download duplicate: \(String(describing: downloadModel.fileName))")
         #endif
-        stateChanged.send((downloadModel, .duplicateDownload))
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .duplicateDownload))
+        }
     }
     
     public func downloadRequestDidExceedQuotaRestriction(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download exceed quota: \(String(describing: downloadModel.fileName))")
         #endif
-        stateChanged.send((downloadModel, .exceedQuotaRestriction))
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .exceedQuotaRestriction))
+        }
     }
     
     public func downloadRequestAuthenticationRequired(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download authentication required: \(String(describing: downloadModel.fileName))")
         #endif
-        stateChanged.send((downloadModel, .authenticationRequired))
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .authenticationRequired))
+        }
     }
     
     public func downloadRequestDidReceiveData(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download received data: \(String(describing: downloadModel.fileName))")
         #endif
-        stateChanged.send((downloadModel, .didReceiveData))
+        DispatchQueue.main.async {
+            self.stateChanged.send((downloadModel, .didReceiveData))
+        }
     }
 }
 
