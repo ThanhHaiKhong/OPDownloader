@@ -41,6 +41,8 @@ public struct CircularActivityIndicator: View {
                     downloadedView()
                 case .failed(_):
                     failedView()
+                default:
+                    EmptyView()
                 }
             }
             .animation(.easeInOut, value: state)

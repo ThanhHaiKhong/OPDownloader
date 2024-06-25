@@ -265,7 +265,8 @@ extension OPDownloader: MZDownloadManagerDelegate {
 
 extension OPDownloader {
     public typealias BackgroundSessionCompletionHandler = () -> Void
-    public typealias ItemState = (MZDownloadModel?, State)
+    public typealias ItemState = (Item?, State)
+    public typealias Item = MZDownloadModel
 }
 
 // MARK: - DownloadViewModel.Operation
