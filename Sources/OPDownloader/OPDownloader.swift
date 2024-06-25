@@ -32,20 +32,7 @@ public class OPDownloader: NSObject, ObservableObject {
     
     // MARK: - Public Properties
     
-    public let downloadStarted = PassthroughSubject<MZDownloadModel, Never>()
-    public let downloadInterrupted = PassthroughSubject<[MZDownloadModel], Never>()
-    public let downloadPaused = PassthroughSubject<MZDownloadModel, Never>()
-    public let downloadResumed = PassthroughSubject<MZDownloadModel, Never>()
-    public let downloadCanceled = PassthroughSubject<MZDownloadModel, Never>()
-    public let downloadFinished = PassthroughSubject<MZDownloadModel, Never>()
-    public let downloadFailed = PassthroughSubject<(MZDownloadModel, Error), Never>()
-    public let destinationNotExist = PassthroughSubject<(MZDownloadModel, URL), Never>()
-    public let downloadMoved = PassthroughSubject<(MZDownloadModel, URL), Never>()
-    public let duplicateDownload = PassthroughSubject<MZDownloadModel, Never>()
-    public let quotaExceeded = PassthroughSubject<MZDownloadModel, Never>()
-    public let authenticationRequired = PassthroughSubject<MZDownloadModel, Never>()
-    public let dataReceived = PassthroughSubject<MZDownloadModel, Never>()
-    public let headRequestFailed = PassthroughSubject<Error, Never>()
+    public let stateChanged = PassthroughSubject<ItemState, Never>()
     public var downloadingItems: [MZDownloadModel] {
         if let manager = manager {
             return manager.downloadingArray
@@ -72,12 +59,12 @@ extension OPDownloader {
                 #if DEBUG
                 print("HEAD request failed with error: \(error)")
                 #endif
-                self.headRequestFailed.send(error)
+                self.stateChanged.send((nil, .failed(error)))
                 self.inProcessings[url] = .failed(error)
             }
         }
     }
-     
+    
     public func perform(operation: Operation, on item: MZDownloadModel) {
         switch operation {
         case .download:
@@ -123,7 +110,7 @@ extension OPDownloader {
 }
 
 private extension OPDownloader {
-
+    
     private func pauseDownloadTask(_ item: MZDownloadModel) {
         if let index = manager?.downloadingArray.firstIndex(where: { $0 == item }) {
             manager?.pauseDownloadTaskAtIndex(index)
@@ -159,14 +146,14 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("Download started: \(String(describing: downloadModel.fileName))")
         #endif
-        downloadStarted.send(downloadModel)
+        stateChanged.send((downloadModel, .started))
     }
     
     public func downloadRequestDidPopulatedInterruptedTasks(_ downloadModels: [MZDownloadModel]) {
         #if DEBUG
         print("Download interrupted tasks: \(downloadModels)")
         #endif
-        downloadInterrupted.send(downloadModels)
+        stateChanged.send((downloadModels.first, .interrupted))
     }
     
     public func downloadRequestDidUpdateProgress(_ downloadModel: MZDownloadModel, index: Int) {
@@ -179,7 +166,8 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("Download paused: \(String(describing: downloadModel.fileName))")
         #endif
-        downloadPaused.send(downloadModel)
+        
+        stateChanged.send((downloadModel, .paused(downloadModel.progress)))
         
         if let url = URL(string: downloadModel.fileURL) {
             inProcessings[url] = .paused(downloadModel.progress)
@@ -190,14 +178,15 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("Download resumed: \(String(describing: downloadModel.fileName))")
         #endif
-        downloadResumed.send(downloadModel)
+        stateChanged.send((downloadModel, .resumed))
     }
     
     public func downloadRequestCanceled(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download canceled: \(String(describing: downloadModel.fileName))")
         #endif
-        downloadCanceled.send(downloadModel)
+        
+        stateChanged.send((downloadModel, .canceled))
         
         if let url = URL(string: downloadModel.fileURL) {
             inProcessings[url] = .canceled
@@ -208,10 +197,10 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("Download finished: \(String(describing: downloadModel.fileName))")
         #endif
-        downloadFinished.send(downloadModel)
         
         if let url = URL(string: downloadModel.destinationPath) {
             inProcessings[url] = .finished(url)
+            stateChanged.send((downloadModel, .finished(url)))
         }
     }
     
@@ -219,7 +208,8 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("Download failed: \(String(describing: downloadModel.fileName)) - \(error.localizedDescription)")
         #endif
-        downloadFailed.send((downloadModel, error))
+        
+        stateChanged.send((downloadModel, .failed(error)))
         
         if let url = URL(string: downloadModel.fileURL) {
             inProcessings[url] = .failed(error)
@@ -230,42 +220,44 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("Download destination does not exist: \(String(describing: downloadModel.fileName))")
         #endif
-        destinationNotExist.send((downloadModel, location))
+        
+        stateChanged.send((downloadModel, .destinationDoestNotExists(location)))
     }
     
     public func downloadRequestDidMoved(_ location: URL, downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download moved: \(String(describing: downloadModel.fileName))")
         #endif
-        downloadMoved.send((downloadModel, location))
+        
+        stateChanged.send((downloadModel, .didMoved))
     }
     
     public func downloadRequestDidDuplicateDownload(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download duplicate: \(String(describing: downloadModel.fileName))")
         #endif
-        duplicateDownload.send(downloadModel)
+        stateChanged.send((downloadModel, .duplicateDownload))
     }
     
     public func downloadRequestDidExceedQuotaRestriction(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download exceed quota: \(String(describing: downloadModel.fileName))")
         #endif
-        quotaExceeded.send(downloadModel)
+        stateChanged.send((downloadModel, .exceedQuotaRestriction))
     }
     
     public func downloadRequestAuthenticationRequired(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download authentication required: \(String(describing: downloadModel.fileName))")
         #endif
-        authenticationRequired.send(downloadModel)
+        stateChanged.send((downloadModel, .authenticationRequired))
     }
     
     public func downloadRequestDidReceiveData(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
         print("Download received data: \(String(describing: downloadModel.fileName))")
         #endif
-        dataReceived.send(downloadModel)
+        stateChanged.send((downloadModel, .didReceiveData))
     }
 }
 
@@ -273,6 +265,7 @@ extension OPDownloader: MZDownloadManagerDelegate {
 
 extension OPDownloader {
     public typealias BackgroundSessionCompletionHandler = () -> Void
+    public typealias ItemState = (MZDownloadModel?, State)
 }
 
 // MARK: - DownloadViewModel.Operation
@@ -299,10 +292,19 @@ extension OPDownloader {
         case idle
         case downloading(Float)
         case paused(Float)
+        case resumed
         case canceled
+        case started
         case finished(URL)
         case failed(Error)
-    
+        case interrupted
+        case destinationDoestNotExists(URL)
+        case didMoved
+        case duplicateDownload
+        case exceedQuotaRestriction
+        case authenticationRequired
+        case didReceiveData
+        
         public var id: String {
             switch self {
             case .idle:
@@ -317,6 +319,24 @@ extension OPDownloader {
                 return "finished"
             case .failed:
                 return "failed"
+            case .interrupted:
+                return "interrupted"
+            case .destinationDoestNotExists(_):
+                return "destinationDoestNotExists"
+            case .didMoved:
+                return "didMoved"
+            case .duplicateDownload:
+                return "duplicateDownload"
+            case .exceedQuotaRestriction:
+                return "exceedQuotaRestriction"
+            case .authenticationRequired:
+                return "authenticationRequired"
+            case .didReceiveData:
+                return "didReceiveData"
+            case .started:
+                return "started"
+            case .resumed:
+                return "resumed"
             }
         }
         
@@ -335,7 +355,7 @@ extension OPDownloader {
             case (.failed, .failed):
                 return true
             default:
-                return false
+                return true
             }
         }
         
@@ -355,6 +375,24 @@ extension OPDownloader {
                 hasher.combine("finished")
             case .failed:
                 hasher.combine("failed")
+            case .interrupted:
+                hasher.combine("interrupted")
+            case .destinationDoestNotExists:
+                hasher.combine("destinationDoestNotExists")
+            case .didMoved:
+                hasher.combine("didMoved")
+            case .duplicateDownload:
+                hasher.combine("duplicateDownload")
+            case .exceedQuotaRestriction:
+                hasher.combine("exceedQuotaRestriction")
+            case .authenticationRequired:
+                hasher.combine("authenticationRequired")
+            case .didReceiveData:
+                hasher.combine("didReceiveData")
+            case .started:
+                hasher.combine("started")
+            case .resumed:
+                hasher.combine("resumed")
             }
         }
     }

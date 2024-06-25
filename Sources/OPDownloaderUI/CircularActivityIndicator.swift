@@ -13,10 +13,10 @@ public struct CircularActivityIndicator: View {
     @StateObject private var downloader: OPDownloader
     @State private var isLoading: Bool = false
     
-    private let lineWidth: CGFloat = 3
+    private let lineWidth: CGFloat = 2.6
     private let pathColor: Color = .gray.opacity(0.5)
     private let lineColor: Color = .accentColor
-    private let width: CGFloat = 28
+    private let width: CGFloat = 25
     
     private let url: URL
     

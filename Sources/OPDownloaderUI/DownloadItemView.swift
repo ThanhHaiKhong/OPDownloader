@@ -30,9 +30,7 @@ public struct DownloadItemView: View {
             Image(systemName: "doc.richtext")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 30, height: 30)
-                .padding(5)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 5))
+                .frame(width: 40, height: 40)
             
             VStack(alignment: .leading) {
                 Text(title)
