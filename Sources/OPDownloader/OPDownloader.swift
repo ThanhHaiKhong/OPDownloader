@@ -161,6 +161,9 @@ extension OPDownloader: MZDownloadManagerDelegate {
     }
     
     public func downloadRequestDidUpdateProgress(_ downloadModel: MZDownloadModel, index: Int) {
+        #if DEBUG
+        print("DOWNLOADING: \(String(describing: downloadModel.fileName)) - \(String(describing: downloadModel.progress))")
+        #endif
         if let url = URL(string: downloadModel.fileURL) {
             inProcessings[url] = .downloading(downloadModel.progress)
         }
