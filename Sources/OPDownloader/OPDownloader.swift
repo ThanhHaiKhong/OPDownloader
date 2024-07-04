@@ -17,14 +17,22 @@ public class OPDownloader: NSObject, ObservableObject {
     
     // MARK: - Initializers
     
-    public init(backgroundSessionCompletionHandler: BackgroundSessionCompletionHandler? = nil) {
+    public init(backgroundSessionCompletionHandler: BackgroundSessionCompletionHandler? = nil, lastPathSessionIdentifier: String? = nil) {
         super.init()
         
         let sessionIdentifier: String
         if let bundleIdentifier = Bundle.main.bundleIdentifier {
-            sessionIdentifier = "\(bundleIdentifier).BackgroundSession"
+            if let lastPathSessionIdentifier = lastPathSessionIdentifier {
+                sessionIdentifier = "\(bundleIdentifier).BackgroundSession-\(lastPathSessionIdentifier)"
+            } else {
+                sessionIdentifier = "\(bundleIdentifier).BackgroundSession"
+            }
         } else {
-            sessionIdentifier = "com.\(UUID().uuidString).BackgroundSession"
+            if let lastPathSessionIdentifier = lastPathSessionIdentifier {
+                sessionIdentifier = "com.\(UUID().uuidString).BackgroundSession-\(lastPathSessionIdentifier)"
+            } else {
+                sessionIdentifier = "com.\(UUID().uuidString).BackgroundSession"
+            }
         }
         
         self.manager = MZDownloadManager(session: sessionIdentifier, delegate: self, completion: backgroundSessionCompletionHandler)
