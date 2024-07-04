@@ -10,6 +10,7 @@ public class OPDownloader: NSObject, ObservableObject {
     // MARK: - Injected Properties
     
     @Published public var inProcessings: [URL : State] = [:]
+    private var downloadedItems: [URL: URL] = [:]
     
     // MARK: - Internal Properties
     
@@ -54,11 +55,16 @@ public class OPDownloader: NSObject, ObservableObject {
 extension OPDownloader {
     
     public func downloadFile(at url: URL, to destinationURL: URL = FileManager.default.temporaryDirectory) {
-        inProcessings[url] = .idle
+        if let fileURL = downloadedItems[url] {
+            stateChanged.send((nil, .finished(fileURL)))
+            return
+        }
+        
         makeHeadRequest(url: url) { result in
             switch result {
             case .success(let httpResponse):
                 if let fileName = httpResponse.suggestedFilename {
+                    self.inProcessings[url] = .idle
                     self.manager?.addDownloadTask(fileName,
                                                   fileURL: url.absoluteString,
                                                   destinationPath: destinationURL.path)
@@ -217,10 +223,11 @@ extension OPDownloader: MZDownloadManagerDelegate {
         print("Download finished: \(String(describing: downloadModel.fileName))")
         #endif
         
-        if let url = URL(string: downloadModel.destinationPath) {
-            inProcessings[url] = .finished(url)
+        if let url = URL(string: downloadModel.destinationPath), let fileURL = URL(string: downloadModel.fileURL) {
+            inProcessings[fileURL] = .finished(url)
             DispatchQueue.main.async {
                 self.stateChanged.send((downloadModel, .finished(url)))
+                self.downloadedItems[fileURL] = url
             }
         }
     }
