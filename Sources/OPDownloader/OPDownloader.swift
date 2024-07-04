@@ -55,11 +55,6 @@ public class OPDownloader: NSObject, ObservableObject {
 extension OPDownloader {
     
     public func downloadFile(at url: URL, to destinationURL: URL = FileManager.default.temporaryDirectory) {
-        if let fileURL = downloadedItems[url] {
-            stateChanged.send((nil, .finished(fileURL)))
-            return
-        }
-        
         makeHeadRequest(url: url) { result in
             switch result {
             case .success(let httpResponse):
