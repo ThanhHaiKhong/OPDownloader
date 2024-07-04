@@ -153,7 +153,7 @@ extension OPDownloader: MZDownloadManagerDelegate {
     
     public func downloadRequestStarted(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
-        print("Download started: \(String(describing: downloadModel.fileName))")
+        print("DOWNLOAD_STARTED: \(String(describing: downloadModel.fileName))")
         #endif
         DispatchQueue.main.async {
             self.stateChanged.send((downloadModel, .started))
@@ -162,7 +162,7 @@ extension OPDownloader: MZDownloadManagerDelegate {
     
     public func downloadRequestDidPopulatedInterruptedTasks(_ downloadModels: [MZDownloadModel]) {
         #if DEBUG
-        print("Download interrupted tasks: \(downloadModels)")
+        print("DOWNLOAD_INTERRUPTED_TASKS: \(downloadModels)")
         #endif
         DispatchQueue.main.async {
             self.stateChanged.send((downloadModels.first, .interrupted))
@@ -173,28 +173,29 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #if DEBUG
         print("DOWNLOADING: \(String(describing: downloadModel.fileName)) - \(String(describing: downloadModel.progress))")
         #endif
-        if let url = URL(string: downloadModel.fileURL) {
-            inProcessings[url] = .downloading(downloadModel.progress)
+        DispatchQueue.main.async {
+            if let url = URL(string: downloadModel.fileURL) {
+                self.inProcessings[url] = .downloading(downloadModel.progress)
+            }
         }
     }
     
     public func downloadRequestDidPaused(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
-        print("Download paused: \(String(describing: downloadModel.fileName))")
+        print("DOWNLOAD_PAUSED: \(String(describing: downloadModel.fileName))")
         #endif
         
         DispatchQueue.main.async {
             self.stateChanged.send((downloadModel, .paused(downloadModel.progress)))
-        }
-        
-        if let url = URL(string: downloadModel.fileURL) {
-            inProcessings[url] = .paused(downloadModel.progress)
+            if let url = URL(string: downloadModel.fileURL) {
+                self.inProcessings[url] = .paused(downloadModel.progress)
+            }
         }
     }
     
     public func downloadRequestDidResumed(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
-        print("Download resumed: \(String(describing: downloadModel.fileName))")
+        print("DOWNLOAD_RESUMED: \(String(describing: downloadModel.fileName))")
         #endif
         DispatchQueue.main.async {
             self.stateChanged.send((downloadModel, .resumed))
@@ -203,19 +204,19 @@ extension OPDownloader: MZDownloadManagerDelegate {
     
     public func downloadRequestCanceled(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
-        print("Download canceled: \(String(describing: downloadModel.fileName))")
+        print("DOWNLOAD_CANCELED: \(String(describing: downloadModel.fileName))")
         #endif
         DispatchQueue.main.async {
             self.stateChanged.send((downloadModel, .canceled))
-        }
-        if let url = URL(string: downloadModel.fileURL) {
-            inProcessings[url] = .canceled
+            if let url = URL(string: downloadModel.fileURL) {
+                self.inProcessings[url] = .canceled
+            }
         }
     }
     
     public func downloadRequestFinished(_ downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
-        print("Download finished: \(String(describing: downloadModel.fileName))")
+        print("DOWNLOAD_FINISHED: \(String(describing: downloadModel.fileName))")
         #endif
         
         if let url = URL(string: downloadModel.destinationPath), let fileURL = URL(string: downloadModel.fileURL) {
@@ -229,13 +230,13 @@ extension OPDownloader: MZDownloadManagerDelegate {
     
     public func downloadRequestDidFailedWithError(_ error: NSError, downloadModel: MZDownloadModel, index: Int) {
         #if DEBUG
-        print("Download failed: \(String(describing: downloadModel.fileName)) - \(error.localizedDescription)")
+        print("DOWNLOAD_FAILED: \(String(describing: downloadModel.fileName)) - \(error.localizedDescription)")
         #endif
         DispatchQueue.main.async {
             self.stateChanged.send((downloadModel, .failed(error)))
-        }
-        if let url = URL(string: downloadModel.fileURL) {
-            inProcessings[url] = .failed(error)
+            if let url = URL(string: downloadModel.fileURL) {
+                self.inProcessings[url] = .failed(error)
+            }
         }
     }
     
