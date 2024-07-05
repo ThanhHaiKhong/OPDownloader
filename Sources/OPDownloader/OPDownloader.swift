@@ -230,13 +230,12 @@ extension OPDownloader: MZDownloadManagerDelegate {
     }
     
     public func downloadRequestFinished(_ downloadModel: MZDownloadModel, index: Int) {
-        #if DEBUG
-        print("DOWNLOAD_FINISHED: \(String(describing: downloadModel.fileName))")
-        #endif
-        
         if let destinationURL = URL(string: downloadModel.destinationPath), let fileURL = URL(string: downloadModel.fileURL) {
             DispatchQueue.main.async {
                 let outputURL = destinationURL.appendingPathComponent(downloadModel.fileName)
+                #if DEBUG
+                print("DOWNLOAD_FINISHED: \(String(describing: outputURL))")
+                #endif
                 self.stateChanged.send((downloadModel, .finished(outputURL)))
                 self.inProcessings[fileURL] = .finished(outputURL)
             }
