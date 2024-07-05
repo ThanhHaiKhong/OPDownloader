@@ -10,7 +10,6 @@ public class OPDownloader: NSObject, ObservableObject {
     // MARK: - Injected Properties
     
     @Published public var inProcessings: [URL : State] = [:]
-    private var downloadedItems: [URL: URL] = [:]
     
     // MARK: - Internal Properties
     
@@ -59,7 +58,19 @@ extension OPDownloader {
             switch result {
             case .success(let httpResponse):
                 if let fileName = httpResponse.suggestedFilename {
-                    self.inProcessings[url] = .idle
+                    let outputURL = destinationURL.appendingPathComponent(fileName)
+                    if FileManager.default.fileExists(atPath: outputURL.path) {
+                        DispatchQueue.main.async {
+                            self.stateChanged.send((nil, .finished(outputURL)))
+                            self.inProcessings[url] = .finished(outputURL)
+                        }
+                        return
+                    }
+                    
+                    DispatchQueue.main.async {
+                        self.inProcessings[url] = .idle
+                    }
+                    
                     self.manager?.addDownloadTask(fileName,
                                                   fileURL: url.absoluteString,
                                                   destinationPath: destinationURL.path)
@@ -68,8 +79,10 @@ extension OPDownloader {
                 #if DEBUG
                 print("HEAD request failed with error: \(error)")
                 #endif
-                self.stateChanged.send((nil, .failed(error)))
-                self.inProcessings[url] = .failed(error)
+                DispatchQueue.main.async {
+                    self.stateChanged.send((nil, .failed(error)))
+                    self.inProcessings[url] = .failed(error)
+                }
             }
         }
     }
@@ -123,9 +136,10 @@ private extension OPDownloader {
     private func pauseDownloadTask(_ item: MZDownloadModel) {
         if let index = manager?.downloadingArray.firstIndex(where: { $0 == item }) {
             manager?.pauseDownloadTaskAtIndex(index)
-            
-            if let url = URL(string: item.fileURL) {
-                inProcessings[url] = .paused(item.progress)
+            DispatchQueue.main.async {
+                if let url = URL(string: item.fileURL) {
+                    self.inProcessings[url] = .paused(item.progress)
+                }
             }
         }
     }
@@ -139,9 +153,10 @@ private extension OPDownloader {
     private func cancelDownloadTask(_ item: MZDownloadModel) {
         if let index = manager?.downloadingArray.firstIndex(where: { $0 == item }) {
             manager?.cancelTaskAtIndex(index)
-            
-            if let url = URL(string: item.fileURL) {
-                inProcessings[url] = .canceled
+            DispatchQueue.main.async {
+                if let url = URL(string: item.fileURL) {
+                    self.inProcessings[url] = .canceled
+                }
             }
         }
     }
@@ -220,10 +235,9 @@ extension OPDownloader: MZDownloadManagerDelegate {
         #endif
         
         if let url = URL(string: downloadModel.destinationPath), let fileURL = URL(string: downloadModel.fileURL) {
-            inProcessings[fileURL] = .finished(url)
             DispatchQueue.main.async {
                 self.stateChanged.send((downloadModel, .finished(url)))
-                self.downloadedItems[fileURL] = url
+                self.inProcessings[fileURL] = .finished(url)
             }
         }
     }
