@@ -60,11 +60,18 @@ extension OPDownloader {
                 if let fileName = httpResponse.suggestedFilename {
                     let outputURL = destinationURL.appendingPathComponent(fileName)
                     if FileManager.default.fileExists(atPath: outputURL.path) {
+                        /*
                         DispatchQueue.main.async {
                             self.stateChanged.send((nil, .finished(outputURL)))
                             self.inProcessings[url] = .finished(outputURL)
                         }
                         return
+                        */
+                        do {
+                            try FileManager.default.removeItem(at: outputURL)
+                        } catch {
+                            
+                        }
                     }
                     
                     DispatchQueue.main.async {
@@ -233,11 +240,13 @@ extension OPDownloader: MZDownloadManagerDelegate {
         if let destinationURL = URL(string: downloadModel.destinationPath), let fileURL = URL(string: downloadModel.fileURL) {
             DispatchQueue.main.async {
                 let outputURL = destinationURL.appendingPathComponent(downloadModel.fileName)
-                #if DEBUG
-                print("DOWNLOAD_FINISHED: \(String(describing: outputURL))")
-                #endif
-                self.stateChanged.send((downloadModel, .finished(outputURL)))
-                self.inProcessings[fileURL] = .finished(outputURL)
+                if FileManager.default.fileExists(atPath: outputURL.path) {
+                    #if DEBUG
+                    print("DOWNLOAD_FINISHED: \(String(describing: outputURL.absoluteString))")
+                    #endif
+                    self.stateChanged.send((downloadModel, .finished(outputURL)))
+                    self.inProcessings[fileURL] = .finished(outputURL)
+                }
             }
         }
     }

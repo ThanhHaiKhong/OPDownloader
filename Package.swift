@@ -33,7 +33,7 @@ let package = Package(
         .target(
             name: "OPDownloaderUI",
             dependencies: [
-                
+                "OPDownloader",
             ],
             path: "Sources/OPDownloaderUI"
         ),
