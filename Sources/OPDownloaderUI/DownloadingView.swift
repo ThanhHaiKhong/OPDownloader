@@ -48,7 +48,6 @@ public struct DownloadingView: View {
                 }
             }
             .navigationTitle("Downloadings")
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
