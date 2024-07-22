@@ -60,27 +60,17 @@ extension OPDownloader {
                 if let fileName = httpResponse.suggestedFilename {
                     let outputURL = destinationURL.appendingPathComponent(fileName)
                     if FileManager.default.fileExists(atPath: outputURL.path) {
-                        /*
                         DispatchQueue.main.async {
                             self.stateChanged.send((nil, .finished(outputURL)))
                             self.inProcessings[url] = .finished(outputURL)
                         }
-                        return
-                        */
-                        do {
-                            try FileManager.default.removeItem(at: outputURL)
-                        } catch {
-                            
+                    } else {
+                        DispatchQueue.main.async {
+                            self.inProcessings[url] = .idle
                         }
+                        
+                        self.manager?.addDownloadTask(fileName, fileURL: url.absoluteString, destinationPath: destinationURL.path)
                     }
-                    
-                    DispatchQueue.main.async {
-                        self.inProcessings[url] = .idle
-                    }
-                    
-                    self.manager?.addDownloadTask(fileName,
-                                                  fileURL: url.absoluteString,
-                                                  destinationPath: destinationURL.path)
                 }
             case .failure(let error):
                 #if DEBUG
